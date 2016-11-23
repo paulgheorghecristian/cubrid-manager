@@ -108,6 +108,7 @@ import org.slf4j.Logger;
 import com.cubrid.common.core.util.DateUtil;
 import com.cubrid.common.core.util.LogUtil;
 import com.cubrid.common.core.util.StringUtil;
+import com.cubrid.common.ui.common.dialog.MessageDialogWithScrollableMessage;
 import com.cubrid.common.ui.common.navigator.CubridDeferredTreeContentManager;
 import com.cubrid.common.ui.common.navigator.DeferredContentProvider;
 import com.cubrid.common.ui.query.action.CopyAction;
@@ -463,7 +464,7 @@ public final class CommonUITool {
 	}
 	
 	public static void openInformationBoxWithScroll(ArrayList<String> strings, String title, String information){
-		Dialog messageDialog = new MessageDialogWithScroll(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), title, information, strings);
+		Dialog messageDialog = new MessageDialogWithScrollableMessage(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), title, information, strings);
 		messageDialog.open();
 	}
 
@@ -1745,43 +1746,4 @@ public final class CommonUITool {
 		}
 		return false;
 	}
-}
-
-class MessageDialogWithScroll extends MessageDialog {
-
-	public ArrayList<String> strings;
-	
-    public MessageDialogWithScroll(Shell parentShell, String title, String information, ArrayList<String> strings) {
-    	super(parentShell, title, null, information,
-                MessageDialog.INFORMATION, new String[] {  "OK" }, 0);
-    	this.strings = strings;
-    }
-
-    @Override
-    public Control createDialogArea(Composite parent) {
-    	Composite content = (Composite) super.createDialogArea(parent);
-    	content.setLayout(new GridLayout());
-        GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
-        data.heightHint = 500;
-        data.widthHint = 250;
-        
-    	
-    	ScrolledComposite sc = new ScrolledComposite(content, SWT.H_SCROLL
-                | SWT.V_SCROLL | SWT.BORDER);
-
-        Composite composite = new Composite(sc, SWT.NONE);
-        composite.setLayout(new FillLayout(SWT.VERTICAL));
-        for(String s : strings){
-            Label l = new Label(composite, SWT.NONE);
-            l.setText(s);
-        }
-        
-        sc.setLayoutData(data);
-        sc.setContent(composite);
-        sc.setExpandHorizontal(true);
-        sc.setExpandVertical(true);
-        sc.setMinSize(composite.computeSize(SWT.DEFAULT, SWT.DEFAULT));
-
-        return parent; 
-    }
 }
