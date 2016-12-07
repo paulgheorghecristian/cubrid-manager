@@ -157,10 +157,10 @@ public class JdbcManageComposite extends
 						Integer first = Integer.parseInt(version1Tokens[i]);
 						Integer second = Integer.parseInt(version2Tokens[i]);
 						if(first != second){
-							return second-first;
+							return first-second;
 						}
 					}
-					return version2Tokens.length - version1Tokens.length;
+					return version1Tokens.length - version2Tokens.length;
 				} else {
 					return 0;
 				}
@@ -171,6 +171,8 @@ public class JdbcManageComposite extends
 				columnNameArr,
 				CommonUITool.createGridData(GridData.FILL_BOTH, 3, 1, -1, 200));
 		jdbcInfoTv.setInput(jdbcListData);
+		jdbcInfoTv.getTable().setSortColumn(jdbcInfoTv.getTable().getColumn(0));
+		jdbcInfoTv.getTable().setSortDirection(sorter.isAsc() ? SWT.UP : SWT.DOWN);
 
 		TableLayout tableLayout = new TableLayout();
 		jdbcInfoTv.getTable().setLayout(tableLayout);
