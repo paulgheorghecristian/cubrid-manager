@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
@@ -295,7 +296,7 @@ public class JdbcManageComposite extends
 					if (taskExec.isSuccess()) {
 						List<String> downloadedList = task.getDriverList();
 						if (downloadedList != null && downloadedList.size() > 0) {
-							downloadedFiles = downloadedList.toString().replace(',', '\n');
+							downloadedFiles = StringUtils.join(downloadedList, '\n');
 							for (int i = 0; i < jdbcList.size(); i++) {
 								String path = savedPath + File.separator
 										+ jdbcList.get(i);
