@@ -159,9 +159,11 @@ public class SetFileEncodingDialog extends CMTitleAreaDialog {
 		if (isOpened) {
 			getShell().setText(Messages.titleOpenFileDialog);
 			setTitle(Messages.titleOpenFileDialogDetail);
+			setMessage(Messages.msgOpenFileDialogDetail);
 		} else {
 			getShell().setText(Messages.titleSaveFileDialog);
 			setTitle(Messages.titleSaveFileDialogDetail);
+			setMessage(Messages.msgSaveFileDialogDetail);
 		}
 	}
 

@@ -82,7 +82,7 @@ public class JdbcOptionDialog extends
 		container.loadPreference();
 
 		setTitle(Messages.titleJdbcOptionDialog);
-
+		setMessage(Messages.msgJdbcManagementDialog);
 		return parentComp;
 	}
 
