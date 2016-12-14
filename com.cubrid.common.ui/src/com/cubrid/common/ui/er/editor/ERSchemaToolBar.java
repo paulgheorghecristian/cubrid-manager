@@ -39,6 +39,7 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
@@ -111,7 +112,7 @@ public class ERSchemaToolBar extends
 	 * Init items on the tool bar
 	 */
 	public void init() {
-		setSize(computeSize(SWT.DEFAULT, 40));
+		setSize(computeSize(SWT.DEFAULT, 35));
 		loginState = erSchemaEditor.getDatabase().isLogined();
 		selectDbItem = new ToolItem(this, SWT.SEPARATOR);
 		Composite comp = createSelectDbLabel();
@@ -416,6 +417,10 @@ public class ERSchemaToolBar extends
 		comp.setLayoutData(gridData);
 
 		final Button autoLayoutButton = new Button(comp, SWT.PUSH | SWT.CENTER | SWT.FILL);
+		Font font = autoLayoutButton.getFont();
+		String fontName = font.getFontData()[0].name;
+		int fontSize = (int)font.getFontData()[0].height;
+		autoLayoutButton.setFont(new Font(getDisplay(), fontName, fontSize - 1, SWT.NONE));
 		autoLayoutButton.setLayoutData(gridData);
 		autoLayoutButton.setText(Messages.btnAutoLayout);
 		autoLayoutButton.addListener(SWT.Selection, new Listener() {
