@@ -112,7 +112,6 @@ public class ERSchemaToolBar extends
 	 * Init items on the tool bar
 	 */
 	public void init() {
-		setSize(computeSize(SWT.DEFAULT, 35));
 		loginState = erSchemaEditor.getDatabase().isLogined();
 		selectDbItem = new ToolItem(this, SWT.SEPARATOR);
 		Composite comp = createSelectDbLabel();
@@ -411,16 +410,13 @@ public class ERSchemaToolBar extends
 	private Composite createAutoLayoutComp() {
 		Composite comp = new Composite(this, SWT.NONE);
 		final GridLayout gdLayout = new GridLayout(1, false);
+		gdLayout.marginHeight = 0;
 		final GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		
 		comp.setLayout(gdLayout);
 		comp.setLayoutData(gridData);
 
 		final Button autoLayoutButton = new Button(comp, SWT.PUSH | SWT.CENTER | SWT.FILL);
-		Font font = autoLayoutButton.getFont();
-		String fontName = font.getFontData()[0].name;
-		int fontSize = (int)font.getFontData()[0].height;
-		autoLayoutButton.setFont(new Font(getDisplay(), fontName, fontSize - 1, SWT.NONE));
 		autoLayoutButton.setLayoutData(gridData);
 		autoLayoutButton.setText(Messages.btnAutoLayout);
 		autoLayoutButton.addListener(SWT.Selection, new Listener() {
