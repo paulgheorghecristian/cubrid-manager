@@ -176,7 +176,7 @@ public abstract class SocketTask extends AbstractTask {
 						serverInfo.getHostAddress(),
 						serverInfo.getHostMonPort(), serverInfo.getUserName())) {
 			errorMsg = Messages.error_disconnected;
-			return;
+			//return;
 		}
 		String message = getMessage();
 

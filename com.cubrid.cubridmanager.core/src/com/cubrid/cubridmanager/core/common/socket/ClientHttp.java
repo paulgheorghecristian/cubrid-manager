@@ -31,6 +31,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
@@ -65,7 +66,7 @@ import com.cubrid.cubridmanager.core.common.ServerManager;
 public class ClientHttp extends AbstractManagerClient {
 	private static final Logger LOGGER = LogUtil.getLogger(ClientHttp.class);
 	private static final String METHOD = "/cm_api";
-	private HttpsURLConnection conn;
+	private HttpURLConnection conn;
 	private String requestUrl;
 	private int timeout = 300000;
 
@@ -108,7 +109,7 @@ public class ClientHttp extends AbstractManagerClient {
 	private void setUpConnection() {
 		tearDownConnection();
 
-		this.requestUrl = "https://" + hostAddress + ":" + port + METHOD;
+		this.requestUrl = "http://" + hostAddress + ":" + port + METHOD;
 
 		// support https
 		try {
@@ -120,7 +121,7 @@ public class ClientHttp extends AbstractManagerClient {
 			// SSLSocketFactory(trustStore);
 			// Scheme sch = new Scheme("https", 443, socketFactory);
 			// this.httpClient.getConnectionManager().getSchemeRegistry().register(sch);
-			X509TrustManager tm = new X509TrustManager() {
+			/*X509TrustManager tm = new X509TrustManager() {
 				public void checkClientTrusted(X509Certificate[] xcs, String string) throws CertificateException {
 				}
 
@@ -139,10 +140,10 @@ public class ClientHttp extends AbstractManagerClient {
 				public boolean verify(String hostname, SSLSession session) {
 					return true;
 				}
-			});
+			});*/
 
 			URL url = new URL(requestUrl);
-			conn = (HttpsURLConnection) url.openConnection();
+			conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("POST");
 			conn.setConnectTimeout(timeout);
 			conn.setDoInput(true);

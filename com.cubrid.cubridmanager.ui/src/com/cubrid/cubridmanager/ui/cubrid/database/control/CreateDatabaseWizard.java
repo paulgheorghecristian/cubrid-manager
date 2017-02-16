@@ -53,6 +53,7 @@ import com.cubrid.common.ui.spi.progress.JobFamily;
 import com.cubrid.common.ui.spi.progress.TaskJobExecutor;
 import com.cubrid.common.ui.spi.util.CommonUITool;
 import com.cubrid.common.ui.spi.util.ValidateUtil;
+import com.cubrid.cubridmanager.core.common.model.ServerInfo.InterfaceVersion;
 import com.cubrid.cubridmanager.core.common.task.CommonSendMsg;
 import com.cubrid.cubridmanager.core.common.task.CommonTaskName;
 import com.cubrid.cubridmanager.core.common.task.CommonUpdateTask;
