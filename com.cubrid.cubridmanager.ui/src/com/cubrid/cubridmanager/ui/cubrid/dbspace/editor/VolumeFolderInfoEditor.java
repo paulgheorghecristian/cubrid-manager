@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -89,8 +90,9 @@ import com.cubrid.common.ui.spi.util.CommonUITool;
 import com.cubrid.cubridmanager.core.common.socket.SocketTask;
 import com.cubrid.cubridmanager.core.common.task.CommonQueryTask;
 import com.cubrid.cubridmanager.core.common.task.CommonSendMsg;
-import com.cubrid.cubridmanager.core.cubrid.dbspace.model.DbSpaceInfo;
 import com.cubrid.cubridmanager.core.cubrid.dbspace.model.DbSpaceInfoList;
+import com.cubrid.cubridmanager.core.cubrid.dbspace.model.DbSpaceInfoListNew;
+import com.cubrid.cubridmanager.core.cubrid.dbspace.model.DbSpaceInfoListOld;
 import com.cubrid.cubridmanager.core.cubrid.dbspace.model.VolumeType;
 import com.cubrid.cubridmanager.ui.CubridManagerUIPlugin;
 import com.cubrid.cubridmanager.ui.cubrid.database.control.PieRenderer;
@@ -110,7 +112,7 @@ public class VolumeFolderInfoEditor extends
 	private static final Logger LOGGER = LogUtil.getLogger(VolumeFolderInfoEditor.class);
 	public static final String ID = "com.cubrid.cubridmanager.ui.cubrid.dbspace.editor.VolumeFolderInfoEditor";
 	private CubridDatabase database = null;
-	private final List<DbSpaceInfo> dbSpaceList;
+	private final List<DbSpaceInfoList.DbSpaceInfo> dbSpaceList;
 
 	private boolean isRunning = false;
 
@@ -127,9 +129,11 @@ public class VolumeFolderInfoEditor extends
 
 	private String volumeFolderName = "";
 	private String volumeType = null;
+	
+	private int majorVersion, minorVersion;
 
 	public VolumeFolderInfoEditor() {
-		dbSpaceList = new ArrayList<DbSpaceInfo>();
+		dbSpaceList = new ArrayList<DbSpaceInfoList.DbSpaceInfo>();
 		color = ResourceManager.getColor(230, 230, 230);
 	}
 
@@ -145,19 +149,29 @@ public class VolumeFolderInfoEditor extends
 		super.init(site, input);
 		if (input instanceof DefaultSchemaNode) {
 			ICubridNode node = (DefaultSchemaNode) input;
+			database = ((DefaultSchemaNode) node).getDatabase();
+			String fullVersion = database.getServer().getServerInfo().getEnvInfo().getServerVersion();
+			StringTokenizer st = new StringTokenizer(fullVersion);
+			st.nextToken();
+			String versionNo = st.nextToken();
+			
+			majorVersion = Integer.parseInt(versionNo.substring(0, versionNo.indexOf('.')));
+			minorVersion = Integer.parseInt(versionNo.substring(versionNo.indexOf('.')+1));
 			String type = node.getType();
 			if ((CubridNodeType.GENERIC_VOLUME_FOLDER.equals(type)
 					|| CubridNodeType.DATA_VOLUME_FOLDER.equals(type)
 					|| CubridNodeType.INDEX_VOLUME_FOLDER.equals(type)
 					|| CubridNodeType.TEMP_VOLUME_FOLDER.equals(type)
-					|| CubridNodeType.ACTIVE_LOG_FOLDER.equals(type) || CubridNodeType.ARCHIVE_LOG_FOLDER.equals(type))
+					|| CubridNodeType.ACTIVE_LOG_FOLDER.equals(type) || CubridNodeType.ARCHIVE_LOG_FOLDER.equals(type)
+					|| CubridNodeType.PP_VOLUME_FOLDER.equals(type) ||
+						CubridNodeType.PT_VOLUME_FOLDER.equals(type) ||
+						CubridNodeType.TT_VOLUME_FOLDER.equals(type))
 					&& (((DefaultSchemaNode) node).getChildren() != null && ((DefaultSchemaNode) node).getChildren().size() > 0)) {
 				for (ICubridNode child : ((DefaultSchemaNode) node).getChildren()) {
-					dbSpaceList.add((DbSpaceInfo) ((DefaultSchemaNode) child).getAdapter(DbSpaceInfo.class));
+					dbSpaceList.add((DbSpaceInfoList.DbSpaceInfo) ((DefaultSchemaNode) child).getAdapter(DbSpaceInfoList.DbSpaceInfo.class));
 				}
 			}
 			volumeFolderName = node.getName();
-			database = ((DefaultSchemaNode) node).getDatabase();
 			if (CubridNodeType.GENERIC_VOLUME_FOLDER.equals(type)) {
 				volumeType = VolumeType.GENERIC.toString();
 				return;
@@ -180,6 +194,18 @@ public class VolumeFolderInfoEditor extends
 			}
 			if (CubridNodeType.ARCHIVE_LOG_FOLDER.equals(type)) {
 				volumeType = VolumeType.ARCHIVE_LOG.toString();
+				return;
+			}
+			if (CubridNodeType.PP_VOLUME_FOLDER.equals(type)){
+				volumeType = VolumeType.PP.getText();
+				return;
+			}
+			if (CubridNodeType.PT_VOLUME_FOLDER.equals(type)){
+				volumeType = VolumeType.PT.getText();
+				return;
+			}
+			if (CubridNodeType.TT_VOLUME_FOLDER.equals(type)){
+				volumeType = VolumeType.TT.getText();
 				return;
 			}
 		}
@@ -299,20 +325,20 @@ public class VolumeFolderInfoEditor extends
 					// for (int i = 0, n = Volinfo.size(); i < n; i++) {
 					// virec = (VolumeInfo) Volinfo.get(i);
 					synchronized (cubridNode) {
-
 						if (database.getDatabaseInfo().getDbSpaceInfoList() != null
 								&& database.getDatabaseInfo().getDbSpaceInfoList().getSpaceinfo() != null) {
 							// calcColumnLength();
-							for (DbSpaceInfo bean : dbSpaceList) {
-								totint = bean.getTotalpage();
-								freeint = bean.getFreepage();
+							ArrayList<DbSpaceInfoList.FreeTotalSizeSpacename> volumeInfos = database.getDatabaseInfo().getDbSpaceInfoList().getVolumesInfoByType(volumeType);
+							for (DbSpaceInfoList.FreeTotalSizeSpacename info : volumeInfos) {
+								totint = info.totalSize;
+								freeint = info.freeSize;
 								if (totint <= 0) {
 									continue;
 								}
 								event.gc.setForeground(Display.getCurrent().getSystemColor(
 										SWT.COLOR_BLACK));
 
-								alignText(bean.getSpacename(), event.gc, 50
+								alignText(info.spaceName, event.gc, 50
 										+ chary * yy, 20, 50, 1);
 
 								// e.gc.drawText(bean.getSpacename(), 10, 50 +
@@ -351,7 +377,7 @@ public class VolumeFolderInfoEditor extends
 													"#,###.##")
 													+ "/"
 													+ StringUtil.formatNumber(
-															bean.getFreepage()
+															freeint
 																	* (database.getDatabaseInfo().getDbSpaceInfoList().getPagesize() / (1048576.0f)),
 															"#,###.##"), 170,
 											50 + chary * yy, true);
@@ -362,14 +388,14 @@ public class VolumeFolderInfoEditor extends
 										&& (volumeType.equalsIgnoreCase(VolumeType.ACTIVE_LOG.toString()) || volumeType.equalsIgnoreCase(VolumeType.ARCHIVE_LOG.toString()))) {
 									alignText(
 											StringUtil.formatNumber(
-													(bean.getTotalpage() * (database.getDatabaseInfo().getDbSpaceInfoList().getLogpagesize() / (1048576.0f))),
+													(totint * (database.getDatabaseInfo().getDbSpaceInfoList().getLogpagesize() / (1048576.0f))),
 													"#,###.##")
 													+ " M", event.gc, 50
 													+ chary * yy, 320, 390, 2);
 								} else {
 									alignText(
 											StringUtil.formatNumber(
-													(bean.getTotalpage() * (database.getDatabaseInfo().getDbSpaceInfoList().getPagesize() / (1048576.0f))),
+													(totint * (database.getDatabaseInfo().getDbSpaceInfoList().getPagesize() / (1048576.0f))),
 													"#,###.##")
 													+ " M", event.gc, 50
 													+ chary * yy, 320, 390, 2);
@@ -378,7 +404,7 @@ public class VolumeFolderInfoEditor extends
 								event.gc.setForeground(Display.getCurrent().getSystemColor(
 										SWT.COLOR_BLACK));
 								alignText(StringUtil.formatNumber(
-										bean.getTotalpage(), "#,###")
+										totint, "#,###")
 										+ " pages", event.gc, 50 + chary * yy,
 										430, 500, 2);
 								yy++;
@@ -399,7 +425,7 @@ public class VolumeFolderInfoEditor extends
 	 *
 	 */
 	public void paintComp1() {
-		for (DbSpaceInfo dbSpaceInfo : dbSpaceList) {
+		for (DbSpaceInfoList.DbSpaceInfo dbSpaceInfo : dbSpaceList) {
 			JFreeChart chart = createChart(createDataset(dbSpaceInfo),
 					dbSpaceInfo);
 
@@ -419,7 +445,7 @@ public class VolumeFolderInfoEditor extends
 	 * @param dbSpaceInfo DbSpaceInfo
 	 * @return dataset
 	 */
-	private DefaultPieDataset createDataset(DbSpaceInfo dbSpaceInfo) {
+	private DefaultPieDataset createDataset(DbSpaceInfoList.DbSpaceInfo dbSpaceInfo) {
 		int freeSize = dbSpaceInfo.getFreepage();
 		int totalSize = dbSpaceInfo.getTotalpage();
 
@@ -446,30 +472,10 @@ public class VolumeFolderInfoEditor extends
 		int totalSize = 0;
 		int freeSize = 0;
 		// String volumeType = "";
-		for (DbSpaceInfo dbSpaceInfo : dbSpaceList) {
+		for (DbSpaceInfoList.DbSpaceInfo dbSpaceInfo : dbSpaceList) {
 			totalSize += dbSpaceInfo.getTotalpage();
 			freeSize += dbSpaceInfo.getFreepage();
-			volumeType = dbSpaceInfo.getType();
 		}
-
-		spaceNameLabel.setText(volumeFolderName);
-
-		while (!spInfoListData.isEmpty()) {
-			spInfoListData.remove(0);
-		}
-
-		Map<String, String> map3 = new HashMap<String, String>();
-		map3.put("0", Messages.tblVolumeFolderType);
-		map3.put("1", volumeType);
-		spInfoListData.add(map3);
-		Map<String, String> map2 = new HashMap<String, String>();
-		map2.put("0", Messages.tblVolumeFolderVolumeCount);
-		map2.put(
-				"1",
-				dbSpaceList.size()
-						+ "                                                                                   ");
-		spInfoListData.add(map2);
-
 		if (!VolumeType.ACTIVE_LOG.toString().equalsIgnoreCase(volumeType)
 				&& !VolumeType.ARCHIVE_LOG.toString().equalsIgnoreCase(
 						volumeType)) {
@@ -524,6 +530,24 @@ public class VolumeFolderInfoEditor extends
 			spInfoListData.add(map6);
 		}
 
+		spaceNameLabel.setText(volumeFolderName);
+
+		while (!spInfoListData.isEmpty()) {
+			spInfoListData.remove(0);
+		}
+
+		Map<String, String> map3 = new HashMap<String, String>();
+		map3.put("0", Messages.tblVolumeFolderType);
+		map3.put("1", volumeType);
+		spInfoListData.add(map3);
+		Map<String, String> map2 = new HashMap<String, String>();
+		map2.put("0", Messages.tblVolumeFolderVolumeCount);
+		map2.put(
+				"1",
+				dbSpaceList.size()
+						+ "                                                                                   ");
+		spInfoListData.add(map2);
+
 		if (spInfoTable != null && !spInfoTable.isDisposed()) {
 			spInfoTableViewer.refresh();
 			for (int i = 0; i < spInfoTable.getColumnCount(); i++) {
@@ -576,10 +600,6 @@ public class VolumeFolderInfoEditor extends
 	 * @return boolean
 	 */
 	public boolean loadData() {
-		CommonQueryTask<DbSpaceInfoList> task = new CommonQueryTask<DbSpaceInfoList>(
-				database.getServer().getServerInfo(),
-				CommonSendMsg.getCommonDatabaseSendMsg(), new DbSpaceInfoList());
-		task.setDbName(database.getName());
 
 		TaskJobExecutor taskJobExecutor = new TaskJobExecutor() {
 			@SuppressWarnings("unchecked")
@@ -602,7 +622,12 @@ public class VolumeFolderInfoEditor extends
 						return new Status(IStatus.ERROR,
 								CubridManagerUIPlugin.PLUGIN_ID, msg);
 					} else {
-						final DbSpaceInfoList model = ((CommonQueryTask<DbSpaceInfoList>) t).getResultModel();
+						final DbSpaceInfoList model;
+						if (majorVersion < 10 || (majorVersion == 10 && minorVersion == 0)) {
+							model = ((CommonQueryTask<DbSpaceInfoListOld>) t).getResultModel();
+						} else {
+							model = ((CommonQueryTask<DbSpaceInfoListNew>) t).getResultModel();
+						}
 						Display.getDefault().syncExec(new Runnable() {
 							public void run() {
 								database.getDatabaseInfo().setDbSpaceInfoList(
@@ -627,7 +652,20 @@ public class VolumeFolderInfoEditor extends
 			}
 
 		};
-		taskJobExecutor.addTask(task);
+		if (majorVersion < 10 || (majorVersion == 10 && minorVersion == 0)) {
+			CommonQueryTask<DbSpaceInfoListOld> task = new CommonQueryTask<DbSpaceInfoListOld>(
+					database.getServer().getServerInfo(),
+					CommonSendMsg.getCommonDatabaseSendMsg(), new DbSpaceInfoListOld());
+			task.setDbName(database.getName());
+			taskJobExecutor.addTask(task);
+		} else {
+			CommonQueryTask<DbSpaceInfoListNew> task = new CommonQueryTask<DbSpaceInfoListNew>(
+					database.getServer().getServerInfo(),
+					CommonSendMsg.getCommonDatabaseSendMsg(), new DbSpaceInfoListNew());
+			task.setDbName(database.getName());
+			taskJobExecutor.addTask(task);
+		}
+		
 		String serverName = database.getServer().getName();
 		String dbName = database.getName();
 		String jobName = Messages.viewVolumeInfoJobName + " - "
@@ -765,7 +803,7 @@ public class VolumeFolderInfoEditor extends
 	 * @return jFreeChart
 	 */
 	private static JFreeChart createChart(DefaultPieDataset dataset,
-			DbSpaceInfo dbSpaceInfo) {
+			DbSpaceInfoList.DbSpaceInfo dbSpaceInfo) {
 
 		JFreeChart chart = ChartFactory.createPieChart3D(
 				dbSpaceInfo.getSpacename() + " Chart", // chart
